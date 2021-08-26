@@ -95,3 +95,62 @@ cfg_if::cfg_if! {
         use alloc::string;
     }
 }
+
+use std::ffi::c_void;
+
+#[link(name = "dl-c-impl", kind = "static")]
+extern "C" {
+    fn smt_state_new(capacity: u32) -> *mut c_void;
+    fn smt_state_del(state: *mut c_void);
+
+    fn smt_state_insert(state: *mut c_void, key: *const u8, value: *const u8) -> isize;
+    fn smt_state_fetch(state: *mut c_void, key: *const u8, value: *mut u8) -> isize;
+    fn smt_state_normalize(state: *mut c_void);
+    fn smt_calculate_root(buffer: *mut u8,
+        state: *const c_void,
+        proof: *const u8,
+        proof_length: u32,
+    ) -> isize;
+    fn smt_verify(
+        hash: *const u8,
+        state: *const c_void,
+        proof: *const u8,
+        proof_length: u32,
+    ) -> isize;
+}
+
+pub struct SMTState {
+    state: *mut c_void,
+}
+
+impl SMTState {
+    pub unsafe fn new(capacity: u32) -> SMTState {
+        SMTState {
+            state : smt_state_new(capacity)
+        }
+    }
+
+    pub unsafe fn del(&self) {
+        smt_state_del(self.state);
+    }
+
+    pub unsafe fn insert(&self, key: *const u8, value: *const u8) -> i32 {
+        smt_state_insert(self.state, key, value) as i32
+    }
+
+    pub unsafe fn fetch(&self, key: *const u8, value: *mut u8) -> i32 {
+        smt_state_fetch(self.state, key, value) as i32
+    }
+
+    pub unsafe fn normalize(&self) {
+        smt_state_normalize(self.state);
+    }
+
+    pub unsafe fn calculate_root(&self, buffer: *mut u8, proof: *const u8, proof_length: u32) -> i32 {
+        smt_calculate_root(buffer, self.state, proof, proof_length) as i32
+    }
+
+    pub unsafe fn verify(&self, hash: *const u8, proof: *const u8, proof_length: u32) -> i32 {
+        smt_verify(hash, self.state, proof, proof_length) as i32
+    }
+}
