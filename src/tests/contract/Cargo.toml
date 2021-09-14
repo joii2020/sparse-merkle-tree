@@ -1,0 +1,12 @@
+[workspace]
+members = ["tests", "contracts/contract"]
+
+[profile.release]
+overflow-checks = true
+opt-level = 's'
+lto = true
+codegen-units = 1
+panic = 'abort'
+
+[dependencies]
+sparse-merkle-tree = { path = "../../../" }
